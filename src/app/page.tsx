@@ -10,6 +10,10 @@ interface User {
   lastContribution: string | null;
 }
 
+interface ApiError {
+  message: string;
+}
+
 export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,8 +52,9 @@ export default function Home() {
       }
 
       await fetchUsers();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
     } finally {
       setLoading(false);
     }
