@@ -1,15 +1,30 @@
 import mongoose from 'mongoose';
 
+type GlobalMongoose = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+} | undefined;
+
+declare global {
+  var mongoose: GlobalMongoose;
+}
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/savings-challenge';
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-let cached = global.mongoose;
+type CachedConnection = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+let cached: CachedConnection = (global.mongoose || { conn: null, promise: null }) as CachedConnection;
+
+// In development, the connection should be reused
+if (process.env.NODE_ENV === 'development' && !global.mongoose) {
+  global.mongoose = cached;
 }
 
 async function connectDB() {
@@ -22,9 +37,7 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose.connect(MONGODB_URI, opts);
   }
 
   try {
