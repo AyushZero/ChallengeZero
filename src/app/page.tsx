@@ -11,7 +11,7 @@ interface User {
 }
 
 interface ApiError {
-  message: string;
+  error: string;
 }
 
 export default function Home() {
@@ -47,14 +47,17 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to contribute');
+        const data = await response.json() as ApiError;
+        throw new Error(data.error);
       }
 
       await fetchUsers();
     } catch (err) {
-      const error = err as Error;
-      setError(error.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }
