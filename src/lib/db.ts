@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 
-type GlobalMongoose = {
+interface MongooseConnection {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
-} | undefined;
+}
 
 declare global {
-  var mongoose: GlobalMongoose;
+  // eslint-disable-next-line no-var
+  var mongoose: MongooseConnection | undefined;
 }
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/savings-challenge';
@@ -15,15 +16,9 @@ if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-type CachedConnection = {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-};
+const cached: MongooseConnection = global.mongoose || { conn: null, promise: null };
 
-let cached: CachedConnection = (global.mongoose || { conn: null, promise: null }) as CachedConnection;
-
-// In development, the connection should be reused
-if (process.env.NODE_ENV === 'development' && !global.mongoose) {
+if (!global.mongoose) {
   global.mongoose = cached;
 }
 
